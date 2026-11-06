@@ -13,4 +13,4 @@ Tests : `cd web && npm test` (Node ≥ 20, aucune dépendance). Essai local : `p
 ## Extensions du contrat (additives)
 
 - Article : `updated_at`, `deleted`/`deleted_at` (suppression logique pour la fusion), `store_override`, `want_auchan`, `query` optionnel.
-- Workflow `search.yml` : entrées attendues `queries` (tableau JSON de chaînes, en minuscules), `stores` (liste séparée par des virgules), `run_id`. Résultat attendu à `data/results/<run_id>.json` à côté du site.
+- Workflow `search.yml` : l'appli envoie `queries` = `[{"query": "lait d'avoine", "stores": ["lafourche","biocoop"]}, …]` (en minuscules), `stores` (union, virgules) et `run_id` ; résultat lu à `data/results/<run_id>.json` à côté du site (`gh-pages`).

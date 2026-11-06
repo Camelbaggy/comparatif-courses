@@ -291,12 +291,24 @@ export function buildBaskets(decisions) {
   return { stores, farm, unfound, pending, total, totalSavings };
 }
 
-/** Demande de recherche pour GitHub Actions : requêtes uniques + enseignes à interroger. */
+/**
+ * Demande de recherche pour GitHub Actions (format de queries.json des scrapers) :
+ * une entrée {query, stores} par requête unique, pour ne pas interroger La Fourche
+ * sur les produits frais. Auchan n'est interrogé que s'il est activé (repli).
+ */
 export function buildSearchRequest(data) {
+  const auchan = data.settings?.auchan_enabled !== false;
   const items = activeItems(data).filter((i) => i.category !== 'farm');
-  const queries = [...new Set(items.map(queryFor).filter(Boolean))];
-  const stores = ['lafourche', 'biocoop'];
-  if (data.settings?.auchan_enabled !== false) stores.push('auchan');
-  const needsLaFourche = items.some((i) => i.category !== 'fresh');
-  return { queries, stores: needsLaFourche ? stores : stores.filter((s) => s !== 'lafourche') };
+  const byQuery = new Map();
+  for (const i of items) {
+    const q = queryFor(i);
+    if (!q) continue;
+    const stores = new Set(byQuery.get(q) ?? []);
+    for (const s of i.category === 'fresh' ? ['biocoop'] : ['lafourche', 'biocoop']) stores.add(s);
+    if (auchan) stores.add('auchan');
+    byQuery.set(q, stores);
+  }
+  const queries = [...byQuery].map(([query, set]) => ({ query, stores: STORES.filter((s) => set.has(s)) }));
+  const stores = STORES.filter((s) => queries.some((q) => q.stores.includes(s)));
+  return { queries, stores };
 }

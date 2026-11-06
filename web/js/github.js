@@ -32,7 +32,7 @@ export function createGithubClient({ config, token, fetchImpl, sleepImpl = sleep
     resultsUrl,
 
     /**
-     * Lance le workflow. Entrées (chaînes) : queries = tableau JSON de requêtes,
+     * Lance le workflow. Entrées (chaînes) : queries = tableau JSON de requêtes ({query, stores}),
      * stores = liste séparée par des virgules, run_id = identifiant choisi par l'appli.
      */
     async dispatchSearch({ queries, stores, runId = makeRunId() }) {

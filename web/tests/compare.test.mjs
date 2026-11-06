@@ -189,13 +189,18 @@ test('articles cochés ou supprimés exclus', () => {
   assert.equal(ds.length, 9);
 });
 
-test('requête de recherche : uniques, sans ferme, La Fourche seulement si utile', () => {
+test('requête de recherche : uniques, sans ferme, enseignes par requête', () => {
   const req = buildSearchRequest(data);
-  assert.ok(!req.queries.includes('carottes'));
+  const by = Object.fromEntries(req.queries.map((q) => [q.query, q.stores]));
+  assert.equal(by.carottes, undefined);
   assert.equal(req.queries.length, 9);
+  assert.deepEqual(by["lait d'avoine"], ['lafourche', 'biocoop', 'auchan']);
+  assert.deepEqual(by['yaourt nature'], ['biocoop', 'auchan']); // frais : pas de La Fourche
   assert.deepEqual(req.stores, ['lafourche', 'biocoop', 'auchan']);
   let d = addItem(emptyData(), { label: 'Lait', category: 'fresh' });
-  assert.deepEqual(buildSearchRequest(d), { queries: ['lait'], stores: ['biocoop', 'auchan'] });
+  assert.deepEqual(buildSearchRequest(d), { queries: [{ query: 'lait', stores: ['biocoop', 'auchan'] }], stores: ['biocoop', 'auchan'] });
+  d = addItem(d, { label: 'lait', category: 'normal' }); // même requête, normal + frais : union
+  assert.deepEqual(buildSearchRequest(d).queries[0].stores, ['lafourche', 'biocoop', 'auchan']);
   d = { ...d, settings: { ...d.settings, auchan_enabled: false } };
-  assert.deepEqual(buildSearchRequest(d).stores, ['biocoop']);
+  assert.deepEqual(buildSearchRequest(d).stores, ['lafourche', 'biocoop']);
 });
