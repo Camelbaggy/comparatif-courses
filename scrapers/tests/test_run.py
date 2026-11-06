@@ -48,8 +48,8 @@ def test_per_query_store_restriction():
 
 
 def test_stub_scrapers_report_error_without_crashing():
-    res = runmod.run(["biocoop"], [("x", None)], client=FakeClient())
-    assert "NotImplementedError" in res["errors"]["biocoop"]
+    res = runmod.run(["auchan"], [("x", None)], client=FakeClient())
+    assert "NotImplementedError" in res["errors"]["auchan"]
 
 
 def test_load_queries_formats(tmp_path):
