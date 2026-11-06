@@ -23,25 +23,25 @@ def algolia_handler(request):
     return httpx.Response(200, json=SEARCH)
 
 
-def test_search_public_price_by_default():
-    sc, _ = make(algolia_handler)
+def test_search_non_member_price():
+    sc, _ = make(algolia_handler, member=False)
     products = {p.id: p for p in sc.search("flocons", limit=20)}
     # Panier duo : prix public = compare_at_price
     panier = products["4-PAN-122"]
-    assert panier.price == 8.49 and panier.member_price is False
+    assert panier.price == 8.49 and panier.member_price is False and panier.non_member_price == 8.49
     assert panier.unit_price_basis == "kg" and panier.unit_price_source == "computed"
     assert panier.store == "lafourche" and panier.url.startswith("https://lafourche.fr/products/")
 
 
-def test_search_member_price():
-    sc, _ = make(algolia_handler, member=True)
+def test_search_member_price_by_default():
+    sc, _ = make(algolia_handler)
     panier = {p.id: p for p in sc.search("flocons", limit=20)}["4-PAN-122"]
-    assert panier.price == 3.82 and panier.member_price is True
+    assert panier.price == 3.82 and panier.member_price is True and panier.non_member_price == 8.49
     assert panier.unit_price == pytest.approx(3.82 / 2.1, abs=1e-3)
 
 
 def test_liquid_and_unit_packs():
-    sc, _ = make(algolia_handler, member=True)
+    sc, _ = make(algolia_handler)
     products = sc.search("x", limit=20)
     oil = next(p for p in products if p.id == "6-BRO-101")
     assert (oil.pack_qty, oil.pack_unit, oil.unit_price_basis) == (1.0, "l", "l")
@@ -64,15 +64,15 @@ def test_get_by_handle_has_ean():
         assert request.url.path == "/products/la-fourche-de-coquillettes-semi-completes-bio-en-sachet-kraft-1kg"
         return httpx.Response(200, text=PAGE)
 
-    sc, _ = make(handler)
+    sc, _ = make(handler, member=False)
     p = sc.get("la-fourche-de-coquillettes-semi-completes-bio-en-sachet-kraft-1kg")
     assert p.id == "4-LAF-298" and p.ean == "3760324848227"
     assert p.price == 2.4 and p.member_price is False  # prix non adhérent
     assert p.unit_price == pytest.approx(2.4) and p.unit_price_basis == "kg"
     assert p.needs_check is False
-    sc, _ = make(handler, member=True)
+    sc, _ = make(handler)
     p = sc.get("la-fourche-de-coquillettes-semi-completes-bio-en-sachet-kraft-1kg")
-    assert p.price == 2.11 and p.member_price is True and p.unit_price == pytest.approx(2.11)
+    assert p.price == 2.11 and p.member_price is True and p.non_member_price == 2.4 and p.unit_price == pytest.approx(2.11)
 
 
 def test_get_by_sku_goes_through_algolia_then_page():
@@ -115,3 +115,9 @@ def test_page_without_next_data_raises():
     sc, _ = make(lambda r: httpx.Response(200, text="<html></html>"))
     with pytest.raises(ValueError):
         sc.get("un-handle")
+
+
+def test_env_switches_default(monkeypatch):
+    monkeypatch.setenv("LAFOURCHE_MEMBER", "0")
+    sc, _ = make(algolia_handler)
+    assert sc.member is False
