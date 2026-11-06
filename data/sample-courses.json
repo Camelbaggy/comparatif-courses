@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "updated_at": "2026-11-06T05:30:00Z",
+  "updated_by": "demo@example.org",
+  "shopping_list": [
+    {
+      "id": "demo-1",
+      "label": "lait d'avoine",
+      "kind": "recurring",
+      "category": "normal",
+      "qty": 6,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-2",
+      "label": "flocons d'avoine",
+      "kind": "recurring",
+      "category": "normal",
+      "qty": 2,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-3",
+      "label": "huile d'olive",
+      "kind": "recurring",
+      "category": "normal",
+      "qty": 1,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-4",
+      "label": "farine de blé T65",
+      "kind": "recurring",
+      "category": "normal",
+      "qty": 2,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-5",
+      "label": "chocolat noir 70%",
+      "kind": "recurring",
+      "category": "normal",
+      "qty": 3,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-6",
+      "label": "yaourt nature",
+      "kind": "recurring",
+      "category": "fresh",
+      "qty": 2,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-7",
+      "label": "beurre doux",
+      "kind": "oneoff",
+      "category": "fresh",
+      "qty": 1,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-8",
+      "label": "lessive",
+      "kind": "oneoff",
+      "category": "normal",
+      "qty": 1,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-9",
+      "label": "produit inexistant",
+      "kind": "oneoff",
+      "category": "normal",
+      "qty": 1,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-10",
+      "label": "carottes",
+      "kind": "recurring",
+      "category": "farm",
+      "qty": 1,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    },
+    {
+      "id": "demo-11",
+      "label": "poulet fermier",
+      "kind": "recurring",
+      "category": "farm",
+      "qty": 1,
+      "checked": false,
+      "note": "",
+      "updated_at": "2026-11-06T05:30:00Z"
+    }
+  ],
+  "equivalences": [],
+  "settings": {
+    "auchan_enabled": true,
+    "auchan_threshold_eur_per_kg": null
+  }
+}
