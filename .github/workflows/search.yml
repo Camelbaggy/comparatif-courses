@@ -1,0 +1,71 @@
+name: Recherche prix
+
+on:
+  workflow_dispatch:
+    inputs:
+      queries:
+        description: 'Requêtes (JSON) : ["flocons avoine", {"query": "lait", "stores": ["biocoop"]}]'
+        required: true
+        type: string
+      stores:
+        description: "Enseignes, séparées par des virgules"
+        required: false
+        default: "biocoop,lafourche"
+        type: string
+      run_id:
+        description: "Identifiant du run (optionnel, [A-Za-z0-9_-]) ; défaut : horodatage UTC"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: search
+  cancel-in-progress: false
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
+
+      - name: Lancer les scrapers
+        env:
+          QUERIES: ${{ inputs.queries }}
+          STORES: ${{ inputs.stores }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          printf '%s' "$QUERIES" > "$RUNNER_TEMP/queries.json"
+          python -m scrapers.run --stores "$STORES" --queries "$RUNNER_TEMP/queries.json" \
+            --out "$RUNNER_TEMP/result.json" ${RUN_ID:+--run-id "$RUN_ID"}
+
+      - name: Publier sur gh-pages (data/results/<run_id>.json, à côté du site)
+        run: |
+          RUN_ID=$(python -c "import json,os;print(json.load(open(os.environ['RUNNER_TEMP']+'/result.json'))['run_id'])")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages
+            git worktree add "$RUNNER_TEMP/pages" gh-pages
+          else
+            git worktree add --detach "$RUNNER_TEMP/pages"
+            git -C "$RUNNER_TEMP/pages" checkout --orphan gh-pages
+            git -C "$RUNNER_TEMP/pages" rm -rf . >/dev/null 2>&1 || true
+          fi
+          mkdir -p "$RUNNER_TEMP/pages/data/results"
+          cp "$RUNNER_TEMP/result.json" "$RUNNER_TEMP/pages/data/results/$RUN_ID.json"
+          cp "$RUNNER_TEMP/result.json" "$RUNNER_TEMP/pages/data/results/latest.json"
+          touch "$RUNNER_TEMP/pages/.nojekyll"
+          cd "$RUNNER_TEMP/pages"
+          git add -A
+          git commit -m "Résultats $RUN_ID"
+          git push origin HEAD:gh-pages

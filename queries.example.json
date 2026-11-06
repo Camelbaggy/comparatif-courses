@@ -1,0 +1,5 @@
+[
+  "flocons avoine",
+  {"query": "lait d'avoine", "stores": ["lafourche", "biocoop"]},
+  {"query": "yaourt nature", "stores": ["biocoop"]}
+]
