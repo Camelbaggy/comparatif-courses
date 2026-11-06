@@ -1,0 +1,53 @@
+name: Déployer le site
+
+# Publie web/ à la racine de la branche gh-pages (GitHub Pages), sans toucher à data/results/
+# où le workflow « Recherche prix » écrit ses résultats.
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", ".github/workflows/deploy-web.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Même groupe que search.yml : les deux écrivent sur gh-pages, jamais en parallèle.
+concurrency:
+  group: search
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tests web
+        run: cd web && node --test "tests/*.test.mjs"
+
+      - name: Publier web/ sur gh-pages
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages
+            git worktree add "$RUNNER_TEMP/pages" gh-pages
+          else
+            git worktree add --detach "$RUNNER_TEMP/pages"
+            git -C "$RUNNER_TEMP/pages" checkout --orphan gh-pages
+            git -C "$RUNNER_TEMP/pages" rm -rf . >/dev/null 2>&1 || true
+          fi
+          # Synchronise le site ; data/results/ (résultats des scrapers) est protégé de la suppression.
+          rsync -a --delete \
+            --exclude '.git' --exclude '.nojekyll' --exclude 'data/results/' \
+            --exclude 'tests/' --exclude 'package.json' --exclude 'README.md' \
+            web/ "$RUNNER_TEMP/pages/"
+          mkdir -p "$RUNNER_TEMP/pages/data/results"
+          touch "$RUNNER_TEMP/pages/.nojekyll"
+          cd "$RUNNER_TEMP/pages"
+          git add -A
+          if git diff --cached --quiet; then echo "Rien à publier"; exit 0; fi
+          git commit -m "Site : ${GITHUB_SHA::7}"
+          git push origin HEAD:gh-pages
