@@ -6,10 +6,11 @@
 - `get` : JSON `__NEXT_DATA__` de la page produit (apporte en plus l'EAN, absent de la recherche).
 
 Prix : le site affiche deux prix, le prix adhérent (`price`) et le prix non adhérent barré
-(`compare_at_price`, libellé « Prix non adhérent » sur la page). Par défaut (`member=False`) on
-retourne le prix public non adhérent, `member_price=False`. Avec `member=True` (ou
-LAFOURCHE_MEMBER=1) on retourne le prix adhérent, `member_price=True`. Si le site ne donne qu'un
-seul prix (pas de `compare_at_price`), c'est ce prix qui est utilisé, `member_price=False`.
+(`compare_at_price`, libellé « Prix non adhérent » sur la page). Nicolas est abonné : par défaut
+(`member=True`) on retourne le prix adhérent, `member_price=True`, et le prix non adhérent reste
+disponible dans `non_member_price`. Avec `member=False` (ou LAFOURCHE_MEMBER=0) on retourne le prix
+public non adhérent, `member_price=False`. Si le site ne donne qu'un seul prix (pas de
+`compare_at_price`), c'est ce prix qui est utilisé, `member_price=False`.
 Aucun identifiant n'est nécessaire.
 """
 from __future__ import annotations
@@ -45,7 +46,7 @@ class LaFourcheScraper:
     def __init__(self, client: PoliteClient, member: bool | None = None) -> None:
         self.client = client
         if member is None:
-            member = os.environ.get("LAFOURCHE_MEMBER", "").strip().lower() in {"1", "true", "oui", "yes"}
+            member = os.environ.get("LAFOURCHE_MEMBER", "1").strip().lower() not in {"0", "false", "non", "no"}
         self.member = member
         self.app_id = os.environ.get("LAFOURCHE_ALGOLIA_APP_ID", ALGOLIA_APP_ID)
         self.api_key = os.environ.get("LAFOURCHE_ALGOLIA_KEY", ALGOLIA_SEARCH_KEY)
@@ -122,6 +123,7 @@ class LaFourcheScraper:
             image=item.get("image") or item.get("product_image"),
             category=category,
             member_price=is_member,
+            non_member_price=public_price,
             site_unit_price=site_unit,
             site_unit_ref=unit_ref,
         )

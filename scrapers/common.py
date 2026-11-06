@@ -136,6 +136,7 @@ class Product:
     image: str | None = None
     category: str | None = None
     member_price: bool = False
+    non_member_price: float | None = None  # La Fourche : prix non adhérent, quand `price` est le prix adhérent
     fetched_at: str = field(default_factory=utc_now_iso)
     needs_check: bool = False
     check_reason: str | None = None

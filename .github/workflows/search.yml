@@ -43,6 +43,7 @@ jobs:
           QUERIES: ${{ inputs.queries }}
           STORES: ${{ inputs.stores }}
           RUN_ID: ${{ inputs.run_id }}
+          LAFOURCHE_MEMBER: "1"  # Nicolas est abonné : prix adhérent (0 = prix non adhérent)
         run: |
           printf '%s' "$QUERIES" > "$RUNNER_TEMP/queries.json"
           python -m scrapers.run --stores "$STORES" --queries "$RUNNER_TEMP/queries.json" \
