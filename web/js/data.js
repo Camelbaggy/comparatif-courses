@@ -11,6 +11,7 @@ export function emptyData() {
     updated_by: null,
     shopping_list: [],
     equivalences: [],
+    manual_products: [],
     settings: { auchan_enabled: true, auchan_threshold_eur_per_kg: null },
   };
 }
@@ -25,6 +26,7 @@ export function normalizeData(raw) {
     version: DATA_VERSION,
     shopping_list: Array.isArray(raw.shopping_list) ? raw.shopping_list : [],
     equivalences: Array.isArray(raw.equivalences) ? raw.equivalences : [],
+    manual_products: Array.isArray(raw.manual_products) ? raw.manual_products : [],
     settings: { ...base.settings, ...(raw.settings ?? {}) },
   };
 }
@@ -115,3 +117,37 @@ export function updateSettings(data, patch, opts = {}) {
 }
 
 export const visibleItems = (data) => data.shopping_list.filter((i) => !i.deleted);
+
+const UNIT_CODES = ['g', 'kg', 'ml', 'cl', 'l', 'unit'];
+
+/** Enregistre (ou remplace) le prix Auchan saisi à la main pour un article. Renvoie data inchangé si invalide. */
+export function setManualProduct(data, item, fields, { now = new Date().toISOString(), user } = {}) {
+  const price = Number(String(fields.price).replace(',', '.'));
+  const qty = Number(String(fields.pack_qty).replace(',', '.'));
+  if (!(price > 0) || !(qty > 0) || !UNIT_CODES.includes(fields.pack_unit)) return data;
+  const entry = {
+    item_id_or_label: item.id,
+    label: item.label,
+    name: String(fields.name ?? '').trim(),
+    pack_qty: qty,
+    pack_unit: fields.pack_unit,
+    price,
+    url: fields.url ?? null,
+    entered_by: user ?? null,
+    entered_at: now,
+  };
+  const others = (data.manual_products ?? []).filter(
+    (m) => m.item_id_or_label !== item.id && m.item_id_or_label !== item.label,
+  );
+  return stamp({ ...data, manual_products: [...others, entry] }, now, user);
+}
+
+/** Suppression logique (pour que la fusion Drive ne ressuscite pas la saisie). */
+export function removeManualProduct(data, item, { now = new Date().toISOString(), user } = {}) {
+  const manual_products = (data.manual_products ?? []).map((m) =>
+    m.item_id_or_label === item.id || m.item_id_or_label === item.label
+      ? { ...m, deleted: true, entered_at: now }
+      : m,
+  );
+  return stamp({ ...data, manual_products }, now, user);
+}

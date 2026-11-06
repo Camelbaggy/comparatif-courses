@@ -71,6 +71,11 @@ function App() {
       setNotice(`Équivalence mémorisée pour « ${item.label} ».`);
     },
     forget: (item) => commit((d, o) => D.removeEquivalence(d, item, o)),
+    setManual: (item, fields) => {
+      commit((d, o) => D.setManualProduct(d, item, fields, o));
+      setNotice(`Prix Auchan enregistré pour « ${item.label} ».`);
+    },
+    removeManual: (item) => commit((d, o) => D.removeManualProduct(d, item, o)),
   };
 
   const decisions = useMemo(() => decideAll(data, run), [data, run]);
