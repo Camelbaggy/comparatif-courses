@@ -47,9 +47,9 @@ def test_per_query_store_restriction():
     assert set(res["queries"]["b"]) == {"good", "bad"}
 
 
-def test_stub_scrapers_report_error_without_crashing():
+def test_unavailable_scraper_reports_error_without_crashing():
     res = runmod.run(["auchan"], [("x", None)], client=FakeClient())
-    assert "NotImplementedError" in res["errors"]["auchan"]
+    assert "AuchanUnavailable" in res["errors"]["auchan"]
 
 
 def test_load_queries_formats(tmp_path):
