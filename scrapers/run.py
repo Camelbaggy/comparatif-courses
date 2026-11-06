@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import json
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -86,6 +87,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--queries", required=True, help="fichier JSON de requêtes")
     ap.add_argument("--out", help="fichier de sortie (défaut : data/results/<run_id>.json)")
     ap.add_argument("--limit", type=int, default=10)
+    ap.add_argument("--run-id", help="identifiant du run (défaut : horodatage UTC) ; [A-Za-z0-9_-] uniquement")
     args = ap.parse_args(argv)
 
     stores = [s.strip() for s in args.stores.split(",") if s.strip()]
@@ -93,7 +95,10 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         ap.error(f"enseigne(s) inconnue(s) : {', '.join(unknown)} (connues : {', '.join(REGISTRY)})")
 
-    result = run(stores, load_queries(args.queries), limit=args.limit)
+    if args.run_id and not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", args.run_id):
+        ap.error("--run-id invalide (caractères autorisés : lettres, chiffres, _ et -)")
+
+    result = run(stores, load_queries(args.queries), limit=args.limit, run_id=args.run_id)
     out = Path(args.out or f"data/results/{result['run_id']}.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, ensure_ascii=False, indent=2), "utf-8")

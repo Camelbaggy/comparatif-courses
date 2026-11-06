@@ -12,6 +12,11 @@ on:
         required: false
         default: "biocoop,lafourche"
         type: string
+      run_id:
+        description: "Identifiant du run (optionnel, [A-Za-z0-9_-]) ; défaut : horodatage UTC"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -37,11 +42,13 @@ jobs:
         env:
           QUERIES: ${{ inputs.queries }}
           STORES: ${{ inputs.stores }}
+          RUN_ID: ${{ inputs.run_id }}
         run: |
           printf '%s' "$QUERIES" > "$RUNNER_TEMP/queries.json"
-          python -m scrapers.run --stores "$STORES" --queries "$RUNNER_TEMP/queries.json" --out "$RUNNER_TEMP/result.json"
+          python -m scrapers.run --stores "$STORES" --queries "$RUNNER_TEMP/queries.json" \
+            --out "$RUNNER_TEMP/result.json" ${RUN_ID:+--run-id "$RUN_ID"}
 
-      - name: Publier sur gh-pages
+      - name: Publier sur gh-pages (data/results/<run_id>.json, à côté du site)
         run: |
           RUN_ID=$(python -c "import json,os;print(json.load(open(os.environ['RUNNER_TEMP']+'/result.json'))['run_id'])")
           git config user.name "github-actions[bot]"
@@ -54,9 +61,9 @@ jobs:
             git -C "$RUNNER_TEMP/pages" checkout --orphan gh-pages
             git -C "$RUNNER_TEMP/pages" rm -rf . >/dev/null 2>&1 || true
           fi
-          mkdir -p "$RUNNER_TEMP/pages/results"
-          cp "$RUNNER_TEMP/result.json" "$RUNNER_TEMP/pages/results/$RUN_ID.json"
-          cp "$RUNNER_TEMP/result.json" "$RUNNER_TEMP/pages/results/latest.json"
+          mkdir -p "$RUNNER_TEMP/pages/data/results"
+          cp "$RUNNER_TEMP/result.json" "$RUNNER_TEMP/pages/data/results/$RUN_ID.json"
+          cp "$RUNNER_TEMP/result.json" "$RUNNER_TEMP/pages/data/results/latest.json"
           touch "$RUNNER_TEMP/pages/.nojekyll"
           cd "$RUNNER_TEMP/pages"
           git add -A

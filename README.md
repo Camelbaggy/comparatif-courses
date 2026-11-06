@@ -23,5 +23,5 @@ signalée dans `errors` sans bloquer les autres.
 
 ## Workflow GitHub
 
-`Actions > Recherche prix > Run workflow` : entrées `queries` (JSON) et `stores`. Les résultats sont
-publiés sur la branche `gh-pages` : `results/<run_id>.json` et `results/latest.json`.
+`Actions > Recherche prix > Run workflow` : entrées `queries` (JSON), `stores` et `run_id` (optionnel). Les résultats sont
+publiés sur la branche `gh-pages`, à côté du site : `data/results/<run_id>.json` et `data/results/latest.json`.
