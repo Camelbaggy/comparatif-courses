@@ -124,13 +124,63 @@ export function candidatesFor(item, run, store) {
   return key === undefined ? null : (queries[key]?.[store] ?? []);
 }
 
+// --- Prix Auchan saisis à la main (Auchan n'est pas récupérable automatiquement) ---
+
+export const MANUAL_STALE_DAYS = 28;
+export const auchanSearchUrl = (query) =>
+  `https://www.auchan.fr/recherche?text=${encodeURIComponent(query)}`;
+
+export function findManual(manualProducts, item) {
+  const label = normalizeLabel(item.label);
+  return (
+    (manualProducts ?? []).find(
+      (m) => !m.deleted && (m.item_id_or_label === item.id || normalizeLabel(m.item_id_or_label) === label),
+    ) ?? null
+  );
+}
+
+/** Convertit une saisie manuelle en produit au schéma commun (store auchan). */
+export function manualToProduct(m) {
+  const size = UNITS[m.pack_unit];
+  const unit = size && m.pack_qty > 0 ? m.price / (m.pack_qty * size.factor) : null;
+  return {
+    store: 'auchan',
+    store_ref: 'Auchan Seynod',
+    id: `manual-${m.item_id_or_label}`,
+    ean: null,
+    name: m.name || 'Produit Auchan (saisie manuelle)',
+    brand: null,
+    pack_qty: m.pack_qty,
+    pack_unit: m.pack_unit,
+    price: m.price,
+    promo_price: null,
+    unit_price: unit == null ? null : Math.round(unit * 100) / 100,
+    unit_price_basis: size?.basis ?? null,
+    unit_price_source: 'computed',
+    in_stock: true,
+    url: m.url || null,
+    image: null,
+    category: null,
+    member_price: false,
+    fetched_at: m.entered_at,
+    manual: true,
+  };
+}
+
+/** Un prix manuel est « ancien » après quelques semaines. */
+export function isStale(product, now = Date.now()) {
+  if (!product?.manual) return false;
+  const t = Date.parse(product.fetched_at);
+  return !t || now - t > MANUAL_STALE_DAYS * 24 * 3600 * 1000;
+}
+
 const sameSku = (a, b) => a != null && b != null && String(a) === String(b);
 
 /**
  * Décide où acheter un article.
  * status : farm | pending (pas encore cherché) | assigned | unfound
  */
-export function decideItem(item, run, equivalences = [], settings = {}) {
+export function decideItem(item, run, equivalences = [], settings = {}, manualProducts = []) {
   const quantity = item.qty > 0 ? item.qty : 1;
   const base = {
     item,
@@ -143,6 +193,8 @@ export function decideItem(item, run, equivalences = [], settings = {}) {
     needsValidation: false,
     saving: null,
     auchanSuggestion: null,
+    manual: null,
+    needsManualAuchan: false,
     reasons: [],
   };
 
@@ -156,6 +208,9 @@ export function decideItem(item, run, equivalences = [], settings = {}) {
   if (stores.every((s) => raw[s] === null)) {
     return { ...base, reasons: ['Recherche pas encore lancée.'] };
   }
+  const manual = findManual(manualProducts, item);
+  if (manual) raw.auchan = [...(raw.auchan ?? []), manualToProduct(manual)];
+  base.manual = manual;
 
   const eq = findEquivalence(equivalences, item);
   const preferred = eq?.preferred ?? {};
@@ -211,6 +266,7 @@ export function decideItem(item, run, equivalences = [], settings = {}) {
       status: 'unfound',
       chosen,
       options,
+      needsManualAuchan: settings.auchan_enabled !== false && !manual,
       reasons: [...reasons, 'Aucun produit disponible trouvé.'],
     };
   }
@@ -255,6 +311,7 @@ export function decideItem(item, run, equivalences = [], settings = {}) {
     needsValidation: !validated && contenders.length > 1,
     saving,
     auchanSuggestion,
+    needsManualAuchan: !!item.want_auchan && !manual && !(options.auchan ?? []).length,
     reasons,
   };
 }
@@ -264,7 +321,7 @@ export const activeItems = (data) =>
   (data.shopping_list ?? []).filter((i) => !i.deleted && !i.checked);
 
 export function decideAll(data, run) {
-  return activeItems(data).map((item) => decideItem(item, run, data.equivalences, data.settings));
+  return activeItems(data).map((item) => decideItem(item, run, data.equivalences, data.settings, data.manual_products));
 }
 
 /** Paniers par enseigne + synthèse. */

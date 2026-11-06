@@ -28,12 +28,19 @@ export function mergeData(local, remote, now = new Date().toISOString()) {
     if (!other || ts(e.validated_at) >= ts(other.validated_at)) eqs.set(key, e);
   }
 
+  const manual = new Map();
+  for (const m of [...(remote.manual_products ?? []), ...(local.manual_products ?? [])]) {
+    const other = manual.get(m.item_id_or_label);
+    if (!other || ts(m.entered_at) >= ts(other.entered_at)) manual.set(m.item_id_or_label, m);
+  }
+
   const newer = localDoc >= remoteDoc ? local : remote;
   return {
     ...newer,
     version: 1,
     shopping_list,
     equivalences: [...eqs.values()],
+    manual_products: [...manual.values()],
     settings: { ...remote.settings, ...newer.settings },
     updated_at: newer.updated_at,
     updated_by: newer.updated_by,
@@ -54,6 +61,9 @@ export function sameContent(a, b) {
     shopping_list: [...d.shopping_list].sort((x, y) => x.id.localeCompare(y.id)),
     equivalences: [...d.equivalences].sort((x, y) =>
       String(x.list_item_id_or_label).localeCompare(String(y.list_item_id_or_label)),
+    ),
+    manual_products: [...(d.manual_products ?? [])].sort((x, y) =>
+      String(x.item_id_or_label).localeCompare(String(y.item_id_or_label)),
     ),
   });
   return norm(sortList(a)) === norm(sortList(b));

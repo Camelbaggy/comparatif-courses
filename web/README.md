@@ -14,3 +14,4 @@ Tests : `cd web && npm test` (Node ≥ 20, aucune dépendance). Essai local : `p
 
 - Article : `updated_at`, `deleted`/`deleted_at` (suppression logique pour la fusion), `store_override`, `want_auchan`, `query` optionnel.
 - Workflow `search.yml` : l'appli envoie `queries` = `[{"query": "lait d'avoine", "stores": ["lafourche","biocoop"]}, …]` (en minuscules), `stores` (union, virgules) et `run_id` ; résultat lu à `data/results/<run_id>.json` à côté du site (`gh-pages`).
+- Fichier partagé : `manual_products` = prix Auchan saisis à la main `{item_id_or_label, label, name, pack_qty, pack_unit, price, url, entered_by, entered_at, deleted?}` ; réutilisés aux courses suivantes, signalés « prix ancien » après 28 jours. Pris en compte uniquement en repli (introuvable ailleurs) ou si « Voir Auchan » est coché.
