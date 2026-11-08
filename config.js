@@ -8,7 +8,7 @@ export const CONFIG = {
     // Origines JavaScript autorisées : https://camelbaggy.github.io (et http://localhost:8080 pour tester).
     clientId: 221027466713-j9gb8b3c7c4tu219hm18e45kvua3fb4i.apps.googleusercontent.com',
     // Clé d'API (restreinte à l'API Picker) et numéro du projet Cloud (« appId » du Picker).
-    apiKey: 'REMPLACER',
+    apiKey: 'AIzaSyCI91uspkTA--hyEMnYC-5Jok2zMq8VF_I',
     appId: 'REMPLACER',
     fileName: 'courses-data.json',
   },
