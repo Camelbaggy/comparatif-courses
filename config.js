@@ -9,7 +9,7 @@ export const CONFIG = {
     clientId: 221027466713-j9gb8b3c7c4tu219hm18e45kvua3fb4i.apps.googleusercontent.com',
     // Clé d'API (restreinte à l'API Picker) et numéro du projet Cloud (« appId » du Picker).
     apiKey: 'AIzaSyCI91uspkTA--hyEMnYC-5Jok2zMq8VF_I',
-    appId: 'REMPLACER',
+    appId: '221027466713',
     fileName: 'courses-data.json',
   },
   github: {
